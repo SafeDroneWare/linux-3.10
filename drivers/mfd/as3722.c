@@ -253,6 +253,7 @@ static int as3722_check_device_id(struct as3722 *as3722)
 	u32 id1, id2, id3;
 	int major, minor;
 	int ret;
+	u32 timer;
 
 	/* Check that this is actually a AS3722 */
 	ret = as3722_read(as3722, AS3722_ASIC_ID1_REG, &id1);
@@ -318,6 +319,14 @@ static int as3722_check_device_id(struct as3722 *as3722)
 		as3722->minor_rev = minor;
 	}
 
+	//luis
+	as3722_read(as3722, AS3722_RESET_TIMER_REG, &timer);
+	printk("dji %s timer %x\n", __func__, timer);
+	timer &= ~(3<<3);
+	timer |= 3<<3;
+	as3722_write(as3722, AS3722_RESET_TIMER_REG, timer);
+	as3722_read(as3722, AS3722_RESET_TIMER_REG, &timer);
+	printk("dji %s after timer %x\n", __func__, timer);
 	dev_info(as3722->dev, "Final OTP version %dV%d\n",
 		as3722->major_rev, as3722->minor_rev);
 	return 0;

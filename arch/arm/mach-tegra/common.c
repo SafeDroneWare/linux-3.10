@@ -1774,9 +1774,14 @@ __setup("modem_id=", tegra_modem_id);
 
 static int __init tegra_usb_port_owner_info(char *id)
 {
+#if 0
 	char *p = id;
 
 	usb_port_owner_info = memparse(p, &p);
+#else
+	/* hard code usb owner info */
+	usb_port_owner_info = 2;
+#endif
 	return 1;
 }
 

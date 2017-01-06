@@ -171,7 +171,7 @@
 		scl-gpio = <&gpio 157 0>; /* gpio PT5 */
 		sda-gpio = <&gpio 158 0>; /* gpio PT6 */
 		nvidia,memory-clients = <14>;
-		status = "okay";
+		status = "disabled";
 		clock-frequency = <100000>;
 	};
 

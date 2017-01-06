@@ -1612,6 +1612,8 @@ static int tegra_sdhci_signal_voltage_switch(struct sdhci_host *sdhci,
 	} else if (signal_voltage == MMC_SIGNAL_VOLTAGE_330) {
 		if (ctrl & SDHCI_CTRL_VDD_180)
 			ctrl &= ~SDHCI_CTRL_VDD_180;
+                min_uV = SDHOST_HIGH_VOLT_3V3;
+                max_uV = SDHOST_HIGH_VOLT_3V3;
 	}
 
 	/* Check if the slot can support the required voltage */
