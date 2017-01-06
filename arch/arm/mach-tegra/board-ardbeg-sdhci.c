@@ -219,7 +219,7 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data3 = {
 		.ocr_mask = MMC_OCR_1V8_MASK,
 	},
 	.ddr_clk_limit = 51000000,
-	.max_clk_limit = 200000000,
+	.max_clk_limit = 136000000,
 	.calib_3v3_offsets = 0x0202,
 	.calib_1v8_offsets = 0x0202,
 };
@@ -468,9 +468,11 @@ int __init ardbeg_sdhci_init(void)
 		tegra_sdhci_platform_data3.boot_vcore_mv = boot_vcore_mv;
 	}
 
+#if 0
 	if (of_machine_is_compatible("nvidia,laguna") ||
 	    of_machine_is_compatible("nvidia,jetson-tk1"))
 		tegra_sdhci_platform_data2.wp_gpio = ARDBEG_SD_WP;
+#endif
 
 	tegra_get_board_info(&board_info);
 	if (board_info.board_id == BOARD_E1780)

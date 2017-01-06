@@ -64,6 +64,7 @@
 #include <linux/platform_data/tegra_ahci.h>
 #include <linux/irqchip/tegra.h>
 #include <sound/max98090.h>
+#include <linux/can/platform/mcp251x.h>
 
 #include <mach/irqs.h>
 #include <mach/pinmux.h>
@@ -787,9 +788,9 @@ static void ardbeg_xusb_init(void)
 		if (!(usb_port_owner_info & UTMI1_PORT_OWNER_XUSB))
 			xusb_pdata.portmap &= ~(TEGRA_XUSB_USB2_P0);
 		if (!(usb_port_owner_info & UTMI2_PORT_OWNER_XUSB))
-			xusb_pdata.portmap &= ~(TEGRA_XUSB_USB2_P2 |
-					TEGRA_XUSB_USB2_P1 | TEGRA_XUSB_SS_P0);
-		xusb_pdata.portmap &= ~(TEGRA_XUSB_SS_P1);
+			xusb_pdata.portmap &= ~(TEGRA_XUSB_USB2_P2 | TEGRA_XUSB_USB2_P1 |
+					TEGRA_XUSB_SS_P0 | TEGRA_XUSB_SS_P1);
+
 	} else {
 		/* Ardbeg */
 		if (board_info.board_id == BOARD_E1781) {
@@ -1120,6 +1121,25 @@ static struct spi_board_info rm31080a_norrin_spi_board[1] = {
 	},
 };
 
+static struct mcp251x_platform_data mcp251x_info = {
+	.oscillator_frequency = 16 * 1000 * 1000,
+	.board_specific_setup = NULL,
+	.power_enable = NULL,
+	.transceiver_enable = NULL,
+};
+
+static struct spi_board_info mcp2510_spi_board_info[] = {
+	{
+		/* depending on your controller */
+		.modalias = "mcp2510",
+		.bus_num = MCP251X_CAN_SPI_ID,
+		.chip_select = MCP251X_CAN_SPI_CS,
+		.max_speed_hz = 16 * 1000 * 1000,
+		.mode = SPI_MODE_3,
+		.platform_data = &mcp251x_info,
+	},
+};
+
 static int __init ardbeg_touch_init(void)
 {
 	tegra_get_board_info(&board_info);
@@ -1399,6 +1419,82 @@ static int __init tegra_jetson_sensorhub_init(void)
 late_initcall(tegra_jetson_sensorhub_init);
 #endif
 
+static int __init tegra_manifold_otg_sel_init(void)
+{
+	
+	if (gpio_request(TEGRA_GPIO_PEE3, "dji_otg_sel"))
+		pr_warn("%s:%d: otg_sel failed", __func__, __LINE__);
+
+	if (gpio_direction_output(TEGRA_GPIO_PEE3, 1))
+		pr_warn("%s:%d: otg_sel failed", __func__, __LINE__);
+
+	if (gpio_export(TEGRA_GPIO_PEE3, 0))
+		pr_warn("%s:%d: otg_sel failed", __func__, __LINE__);
+
+//disable i2c2, enable its gpio function; pt5 as input, pt6 as output. Noting to do with OTG.
+	if (gpio_request(TEGRA_GPIO_PT5, "gpio_pt5"))
+		pr_warn("%s:%d: gpio_pt5 failed", __func__, __LINE__);
+
+	if (gpio_direction_input(TEGRA_GPIO_PT5))
+		pr_warn("%s:%d: gpio_pt5 failed", __func__, __LINE__);
+
+	if (gpio_export(TEGRA_GPIO_PT5, 1))
+		pr_warn("%s:%d: gpio_pt5 failed", __func__, __LINE__);
+
+
+	if (gpio_request(TEGRA_GPIO_PT6, "gpio_pt6"))
+		pr_warn("%s:%d: gpio_pt6 failed", __func__, __LINE__);
+
+	if (gpio_direction_output(TEGRA_GPIO_PT6, 0))
+		pr_warn("%s:%d: gpio_pt6 failed", __func__, __LINE__);
+
+	if (gpio_export(TEGRA_GPIO_PT6, 1))
+		pr_warn("%s:%d: gpio_pt6 failed", __func__, __LINE__);
+
+	printk(KERN_ERR "manifold gpio init\n");
+
+	return 0;
+
+}
+
+late_initcall(tegra_manifold_otg_sel_init);
+
+static struct spi_board_info kk1_spi_board_info[] __initdata = {
+
+	[0]={
+	/*	.modalias = "spidev",*/
+		.modalias = "m25p80",
+		.bus_num = 3,
+		.chip_select = 0,
+		.max_speed_hz = 10*1000*1000,
+		.mode = SPI_MODE_3,
+
+	},
+
+};
+
+static int __init tegra_manifold_spi_init(void) 
+{
+	int status = 0;
+	spi_register_board_info(kk1_spi_board_info, ARRAY_SIZE(kk1_spi_board_info));
+
+	return status;
+}
+late_initcall(tegra_manifold_spi_init);
+
+#define USB_POWER	TEGRA_GPIO_PS4
+static int __init dji_usb_power_init(void)
+{
+	if (gpio_request(USB_POWER, "usb_power"))
+		pr_warn("%s:%d: gpio_request failed", __func__, __LINE__);
+
+	if (gpio_direction_output(USB_POWER, 1))
+		pr_warn("%s:%d: gpio_direction_output failed",
+			__func__, __LINE__);
+
+	return 0;
+}
+
 static void __init tegra_ardbeg_late_init(void)
 {
 	struct board_info board_info;
@@ -1463,7 +1559,12 @@ static void __init tegra_ardbeg_late_init(void)
 
 	edp_init();
 	isomgr_init();
-	ardbeg_touch_init();
+
+	/* No touch connected on jetson-tk1 board */
+	if (board_info.board_id != BOARD_PM375) {
+		ardbeg_touch_init();
+	}
+
 	if (board_info.board_id == BOARD_E2548 ||
 			board_info.board_id == BOARD_P2530)
 		loki_panel_init();
@@ -1501,6 +1602,18 @@ static void __init tegra_ardbeg_late_init(void)
 	}	else {
 		ardbeg_sensors_init();
 		ardbeg_soctherm_init();
+	}
+
+	if (board_info.board_id == BOARD_PM375) {
+		dji_usb_power_init();
+	}
+
+	/* Register MCP251X CAN SPI device */
+	if (board_info.board_id == BOARD_PM375) {
+		mcp2510_spi_board_info[0].irq =
+			gpio_to_irq(MCP251X_CAN_GPIO_IRQ_SPI);
+		spi_register_board_info(mcp2510_spi_board_info,
+			ARRAY_SIZE(mcp2510_spi_board_info));
 	}
 
 	ardbeg_setup_bluedroid_pm();

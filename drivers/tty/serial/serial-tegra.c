@@ -322,18 +322,18 @@ static char tegra_uart_decode_rx_error(struct tegra_uart_port *tup,
 			/* Overrrun error */
 			flag |= TTY_OVERRUN;
 			tup->uport.icount.overrun++;
-			dev_err(tup->uport.dev, "Got overrun errors\n");
+			//dev_err(tup->uport.dev, "Got overrun errors\n");
 		} else if (lsr & UART_LSR_PE) {
 			/* Parity error */
 			flag |= TTY_PARITY;
 			tup->uport.icount.parity++;
-			dev_err(tup->uport.dev, "Got Parity errors\n");
+			//dev_err(tup->uport.dev, "Got Parity errors\n");
 		} else if (lsr & UART_LSR_FE) {
 			flag |= TTY_FRAME;
 			tup->uport.icount.frame++;
-			dev_err(tup->uport.dev, "Got frame errors\n");
+			//dev_err(tup->uport.dev, "Got frame errors\n");
 		} else if (lsr & UART_LSR_BI) {
-			dev_err(tup->uport.dev, "Got Break\n");
+			//dev_err(tup->uport.dev, "Got Break\n");
 			tup->uport.icount.brk++;
 			/* If FIFO read error without any data, reset Rx FIFO */
 			if (!(lsr & UART_LSR_DR) && (lsr & UART_LSR_FIFOE))
@@ -1356,6 +1356,8 @@ board_file:
 		dev_err(&pdev->dev, "Failed to add uart port, err %d\n", ret);
 		return ret;
 	}
+	u->state->port.low_latency = 1;
+        printk(KERN_ERR "***dji latency 1\n");
 	return ret;
 }
 

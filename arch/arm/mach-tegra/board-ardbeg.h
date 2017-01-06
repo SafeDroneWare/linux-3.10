@@ -68,7 +68,7 @@ void ardbeg_camera_auxdata(void *);
 #define CAM_BOARD_E1806
 
 /* Modem related GPIOs */
-#define MODEM_EN		TEGRA_GPIO_PS4
+#define MODEM_EN		-1
 #define MDM_RST			TEGRA_GPIO_PS3
 #define MDM_COLDBOOT		TEGRA_GPIO_PO5
 #define MDM_SAR0		TEGRA_GPIO_PG2
@@ -95,6 +95,11 @@ enum tegra_bb_type {
 
 #define TOUCH_GPIO_IRQ_MAXIM_STI_SPI	TEGRA_GPIO_PK2
 #define TOUCH_GPIO_RST_MAXIM_STI_SPI	TEGRA_GPIO_PK4
+
+/* MCP251X definitions */
+#define MCP251X_CAN_GPIO_IRQ_SPI	TEGRA_GPIO_PK5
+#define MCP251X_CAN_SPI_ID		0
+#define MCP251X_CAN_SPI_CS		0
 
 /* Audio-related GPIOs */
 /*Same GPIO's used for T114(Interposer) and T124*/
